@@ -2,6 +2,7 @@
 using System;
 using System.Threading.Tasks;
 using Vault.Client.Entities;
+using Vault.Client.Utils;
 
 namespace Vault.Client.Core
 {
@@ -14,22 +15,32 @@ namespace Vault.Client.Core
             this.apiClient = apiClient;
         }
 
-        public async Task<string> DecryptAsync(DecryptOptions decryptOptions)
+        public async Task<DecryptResponse> Decrypt(DecryptOptions decryptOptions)
         {
-            var httpResp = await this.apiClient.SendAsync(decryptOptions);
+            var httpResp = await this.apiClient.SendAsync(new ApiOptions 
+            {
+                ApiPath = VaultConstants.VaultApiPaths.DecryptPath,
+                HttpMethod = System.Net.Http.HttpMethod.Post,
+                Data = decryptOptions
+            });
             var decryptResp = JsonConvert.DeserializeObject<DecryptResponse>(await httpResp.Content.ReadAsStringAsync());
             var byteArr = Convert.FromBase64String(decryptResp.Data.PlainText);
-
-            return System.Text.Encoding.UTF8.GetString(byteArr);
+            decryptResp.Data.PlainText = System.Text.Encoding.UTF8.GetString(byteArr);
+            return decryptResp;
         }
 
-        public async Task<string> EncryptAsync(EncryptOptions encryptOptions)
+        public async Task<EncryptResponse> Encrypt(EncryptOptions encryptOptions)
         {
             encryptOptions.PlainText = Convert.ToBase64String(System.Text.UTF8Encoding.UTF8.GetBytes(encryptOptions.PlainText));
-            var httpResp = await this.apiClient.SendAsync(encryptOptions);
+            var httpResp = await this.apiClient.SendAsync(new ApiOptions
+            {
+                ApiPath = VaultConstants.VaultApiPaths.EncryptPath,
+                HttpMethod = System.Net.Http.HttpMethod.Post,
+                Data = encryptOptions
+            });
             var encryptResp = JsonConvert.DeserializeObject<EncryptResponse>(await httpResp.Content.ReadAsStringAsync());
 
-            return encryptResp.Data.CipherText;
+            return encryptResp;
         }
     }
 }

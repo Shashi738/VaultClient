@@ -34,38 +34,13 @@ namespace Vault.Client.Infrastructure
             this.apiPathBuilder = new ApiPathBuilder();
         }
 
-        public virtual async Task<HttpResponseMessage> SendAsync(object data = null)
+        public virtual async Task<HttpResponseMessage> SendAsync(ApiOptions apiOptions)
         {
-            HttpRequestMessage httpRequestMessage = CreateHttpRequestMessage(data);
-            await Authenticate();
+            HttpRequestMessage httpRequestMessage = await CreateHttpRequestMessage(apiOptions.ApiPath, apiOptions.HttpMethod);
 
-            return await SendApiRequestAsync(httpRequestMessage, data);
-        }
-
-        protected virtual async Task Authenticate()
-        {
-            var authResp = await this.authMethod.Authenticate(this.vaultOptions.AuthOptions);
-            this.cacheVault[VaultConstants.VaultClientToken] = authResp.ClientToken;
-        }
-
-        protected HttpRequestMessage CreateHttpRequestMessage(object data)
-        {
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
-            httpRequestMessage.Headers.Accept.Clear();
-            httpRequestMessage.Headers.Accept.Add(
-                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(VaultConstants.JsonMediaType));
-            httpRequestMessage.RequestUri = new Uri(this.httpClient.BaseAddress.ToString() + GetApiPath(data));
-            return httpRequestMessage;
-        }
-
-        protected async Task<HttpResponseMessage> SendApiRequestAsync(HttpRequestMessage httpRequestMessage, Object data)
-        {
-            SetHttpMethod(httpRequestMessage);
-            AddRequestHeaders(httpRequestMessage);
-
-            if (data != null)
+            if (apiOptions.Data != null)
             {
-                httpRequestMessage.Content = new StringContent(JsonConvert.SerializeObject(data));
+                httpRequestMessage.Content = new StringContent(JsonConvert.SerializeObject(apiOptions.Data));
             }
 
             var httpResponseMessage = await httpClient.SendAsync(httpRequestMessage, new CancellationToken());
@@ -74,16 +49,32 @@ namespace Vault.Client.Infrastructure
             return httpResponseMessage;
         }
 
-        public virtual void AddRequestHeaders(HttpRequestMessage httpRequestMessage)
+        protected virtual async Task<HttpRequestMessage> CreateHttpRequestMessage(string apiPath, HttpMethod httpMethod)
         {
-            if(cacheVault[VaultConstants.VaultClientToken] != null)
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            httpRequestMessage.Headers.Accept.Clear();
+            httpRequestMessage.Headers.Accept.Add(
+                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(VaultConstants.JsonMediaType));
+            httpRequestMessage.RequestUri = new Uri(this.httpClient.BaseAddress.ToString() + BuildApiPath(apiPath));
+            httpRequestMessage.Method = httpMethod;
+            if (cacheVault[VaultConstants.VaultClientToken] == null)
             {
-                httpRequestMessage.Headers.Add(VaultConstants.VaultClientToken, cacheVault[VaultConstants.VaultClientToken].ToString());
+                await Authenticate();
             }
+            httpRequestMessage.Headers.Add(VaultConstants.VaultClientToken, cacheVault[VaultConstants.VaultClientToken].ToString());
+
+            return httpRequestMessage;
         }
 
-        public abstract string GetApiPath(object data = null);
+        protected virtual async Task Authenticate()
+        {
+            var authResp = await this.authMethod.Authenticate(this.vaultOptions.AuthOptions);
+            this.cacheVault[VaultConstants.VaultClientToken] = authResp.ClientToken;
+        }
 
-        public abstract void SetHttpMethod(HttpRequestMessage httpRequestMessage);
+        protected virtual string BuildApiPath(string apiPath)
+        {
+            return string.Empty;
+        }
     }
 }

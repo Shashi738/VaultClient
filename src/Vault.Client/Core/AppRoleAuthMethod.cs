@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Threading.Tasks;
 using Vault.Client.Entities;
+using Vault.Client.Utils;
 
 namespace Vault.Client.Core
 {
@@ -15,7 +16,12 @@ namespace Vault.Client.Core
 
         public async Task<AuthResponse> Authenticate(AuthMethodOptions authOptions)
         {
-            var httpResp = await this.apiClient.SendAsync(authOptions);
+            var httpResp = await this.apiClient.SendAsync(new ApiOptions
+            {
+                ApiPath = VaultConstants.VaultApiPaths.AppRoleAuthEndPoint,
+                HttpMethod = System.Net.Http.HttpMethod.Post,
+                Data = authOptions
+            });
             var appRoleAuthResp = JsonConvert.DeserializeObject<AppRoleAuthResponse>(await httpResp.Content.ReadAsStringAsync());
 
             return new AuthResponse

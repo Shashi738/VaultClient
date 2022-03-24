@@ -1,11 +1,12 @@
 
 using System.Net.Http;
 using System.Threading.Tasks;
+using Vault.Client.Entities;
 
 namespace Vault.Client
 {
     public interface IRestApiClient
     {
-        Task<HttpResponseMessage> SendAsync(object data);
+        Task<HttpResponseMessage> SendAsync(ApiOptions apiOptions);
     }
 }

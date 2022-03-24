@@ -9,8 +9,8 @@ namespace Vault.Client
 {
     public interface ITransitSecretsEngine
     {
-        Task<string> EncryptAsync(EncryptOptions encryptOptions);
+        Task<EncryptResponse> Encrypt(EncryptOptions encryptOptions);
 
-        Task<string> DecryptAsync(DecryptOptions decryptOptions);
+        Task<DecryptResponse> Decrypt(DecryptOptions decryptOptions);
     }
 }

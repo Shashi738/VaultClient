@@ -21,20 +21,21 @@ namespace Vault.Client.Infrastructure
             this.appRoleRequest = appRoleRequest;
         }
 
-        public override async Task<HttpResponseMessage> SendAsync(object data = null)
+        protected override async Task<HttpRequestMessage> CreateHttpRequestMessage(string apiPath, HttpMethod httpMethod)
         {
-            HttpRequestMessage httpRequestMessage = CreateHttpRequestMessage(data);
-            return await SendApiRequestAsync(httpRequestMessage, data); 
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            httpRequestMessage.Headers.Accept.Clear();
+            httpRequestMessage.Headers.Accept.Add(
+                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(VaultConstants.JsonMediaType));
+            httpRequestMessage.RequestUri = new Uri(this.httpClient.BaseAddress.ToString() + BuildApiPath(apiPath));
+            httpRequestMessage.Method = httpMethod;
+
+            return Task.FromResult(httpRequestMessage).Result;
         }
 
-        public override string GetApiPath(object data)
+        protected override string BuildApiPath(string apiPath)
         {
-            return this.appRoleRequest.Version + VaultConstants.VaultApiPaths.AppRoleAuthEndPoint;
-        }
-
-        public override void SetHttpMethod(HttpRequestMessage httpRequestMessage)
-        {
-            httpRequestMessage.Method = HttpMethod.Post;
+            return this.appRoleRequest.Version + apiPath;
         }
     }
 }
