@@ -5,18 +5,18 @@ A .NET library for interacting with HashiCorp Vault
 For sample refer Vault.Client.Console application
 
 ```C#
- IAuthMethod authMethod = new AppRoleAuthMethod(
+            IAuthMethod authMethod = new AppRoleAuthMethod(
                 new AppRoleAuthApiClient(
                     new AppRoleRequest
                     {
-                        BaseAddress = $"http://127.0.0.1:8200/"
+                        BaseAddress = @"http://127.0.0.1:8200/"
                     }));
 
             ITransitSecretsEngine transitSecrets = new TransitSecretsEngine(
                 new TransitApiClient(
                     new TransitRequest
                     {
-                        BaseAddress = $"http://127.0.0.1:8200/",
+                        BaseAddress = @"http://127.0.0.1:8200/",
                         EnginePath = "cctransit",
                         KeyRingName = "cckeys",
                         AuthOptions = new AuthMethodOptions
@@ -27,14 +27,17 @@ For sample refer Vault.Client.Console application
                     },
                 authMethod));
 
-            var cipherText = await transitSecrets.EncryptAsync(new EncryptOptions
+            var encryptResponse = await transitSecrets.Encrypt(new EncryptOptions
             {
                 PlainText = "5454545454545454"
             });
 
-            var plainText = await transitSecrets.DecryptAsync(new DecryptOptions
+            var decryptResponse = await transitSecrets.Decrypt(new DecryptOptions
             {
-                CipherText = cipherText
+                CipherText = encryptResponse.Data.CipherText
             });
+
+            System.Console.WriteLine($"Data Encrypted : {encryptResponse.Data.CipherText}");
+            System.Console.WriteLine($"Data Decrypted : {decryptResponse.Data.PlainText}");
 ```
 
