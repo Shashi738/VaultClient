@@ -15,27 +15,13 @@ namespace Vault.Client.Infrastructure
             this.transitRequest = transitRequest;
         }
 
-        public override string GetApiPath(object data)
+        protected override string BuildApiPath(string apiPath)
         {
-            var cryptoPath = string.Empty;
-            if(data != null && data is EncryptOptions)
-            {
-                cryptoPath = VaultConstants.VaultApiPaths.EncryptPath;
-            }
-            else if(data != null && data is DecryptOptions)
-            {
-                cryptoPath = VaultConstants.VaultApiPaths.DecryptPath;
-            }
             return this.transitRequest.Version
-                + "/"
-                + this.transitRequest.EnginePath
-                + "/"+ cryptoPath + "/"
-                + this.transitRequest.KeyRingName;
-        }
-
-        public override void SetHttpMethod(HttpRequestMessage httpRequestMessage)
-        {
-            httpRequestMessage.Method = HttpMethod.Post;
+               + "/"
+               + this.transitRequest.EnginePath
+               + "/" + apiPath + "/"
+               + this.transitRequest.KeyRingName;
         }
     }
 }
